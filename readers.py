@@ -13,22 +13,24 @@ class DeviationReader:
         self._component = component
 
     def read(self):
-        component_sql = '' if self._component == None else f"AND CHR_COMPONENT = '{self._component}'"
+        if self._component == 'unbalanced':
+            component_sql = '' 
+        else:
+            component_sql = f"AND CHR_COMPONENT = '{self._component}'"
         sql = textwrap.dedent(f"""
-        SELECT AVR_ERROR_MORE, AVR_PROJECT_NO
-        FROM METER_ERROR 
-        WHERE FK_LNG_METER_ID = '{self._meter_id}'
-        AND CHR_ERROR_TYPE = '{self._error_type}'
-        AND CHR_POWER_TYPE = '{self._power_type}'
-        {component_sql}
-        ORDER BY AVR_PROJECT_NO
-        """)
+            SELECT AVR_ERROR_MORE, AVR_PROJECT_NO
+            FROM METER_ERROR 
+            WHERE FK_LNG_METER_ID = '{self._meter_id}'
+            AND CHR_ERROR_TYPE = '{self._error_type}'
+            AND CHR_POWER_TYPE = '{self._power_type}'
+            {component_sql}
+            ORDER BY AVR_PROJECT_NO
+            """)
         data = _cursor.execute(sql).fetchall()
         # [('+0.0539|+0.0568|+0.0553|+0.05', ), ('+0.0596|+0.0601|+0.0599|+0.05', ),...
         deviation = np.array([e[0].split('|') for e in data])
         project_no = np.array([e[1] for e in data])
         return deviation, project_no
-
 
 
 if __name__ == '__main__':
