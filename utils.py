@@ -1,16 +1,6 @@
 import pyodbc
-# def singleton(cls):
-#     _instance = {}
-
-#     def inner():
-#         if cls not in _instance:
-#             _instance[cls] = cls()
-#         return _instance[cls]
-
-#     return inner
 
 
-# @singleton # 这里考虑不需要单例模式
 class Cursor:
     def __init__(self, conn_str):
         self.conn_str = conn_str
