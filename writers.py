@@ -37,7 +37,11 @@ class Writer:
 
     def test_save(self):
         time_stamp = time.strftime('%m%d%H%M%S', time.localtime())
-        self._doc.save('data/test'+ time_stamp +'.docx')
+        self._doc.save('test/test'+ time_stamp +'.docx')
+
+    def save(self):
+        pass
+
 
 
 if __name__ == '__main__':
