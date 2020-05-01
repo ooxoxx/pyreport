@@ -1,5 +1,4 @@
 from docx import Document
-import time
 
 
 class Writer:
@@ -36,6 +35,7 @@ class Writer:
             data_row_cursor += 1
 
     def test_save(self):
+        import time
         time_stamp = time.strftime('%m%d%H%M%S', time.localtime())
         self._doc.save('test/test'+ time_stamp +'.docx')
 
