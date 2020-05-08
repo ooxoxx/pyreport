@@ -10,7 +10,7 @@ class Cursor:
             cnxn = pyodbc.connect(self.conn_str)
             self._cursor = cnxn.cursor()
         except Exception:
-            raise Exception('database unconnected.)
+            raise Exception('数据库访问不到')
         return self._cursor
 
 
