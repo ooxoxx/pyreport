@@ -3,9 +3,14 @@ import numpy as np
 import textwrap
 
 
-_cursor = Cursor(ms_access(r'data/ClouMeterData_original.mdb')).get_cursor()
+class Data(object):
+    _cursor = Cursor(ms_access(r'data/ClouMeterData_original.mdb')).get_cursor()
 
-class MeterIDReader:
+    def read(self):
+        raise Exception("Data.read() not implemented.")
+
+
+class IdData(Data):
     """docstring for MeterIDReader"""
     def __init__(self, meter_address):
         self._meter_address = meter_address
@@ -16,10 +21,10 @@ class MeterIDReader:
             FROM METER_INFO
             WHERE AVR_ADDRESS = '{self._meter_address}'
             """)
-        data = _cursor.execute(sql).fetchone()
+        data = self._cursor.execute(sql).fetchone()
         return data[0]
         
-class DeviationReader:
+class DeviationData(Data):
     def __init__(self, meter_id, power_type, component, error_type='0'):
         self._meter_id = meter_id
         self._error_type = error_type
@@ -32,7 +37,7 @@ class DeviationReader:
         elif self._component == 'balanced':
             component_sql = f"AND CHR_COMPONENT = '{self._component}'"
         else:
-            raise Exception('component参数有误')
+            raise Exception('component input error.')
         sql = textwrap.dedent(f"""
             SELECT AVR_ERROR_MORE, AVR_PROJECT_NO
             FROM METER_ERROR 
@@ -42,13 +47,13 @@ class DeviationReader:
             {component_sql}
             ORDER BY AVR_PROJECT_NO
             """)
-        data = _cursor.execute(sql).fetchall()
+        data = self._cursor.execute(sql).fetchall()
         # [('+0.0539|+0.0568|+0.0553|+0.05', ), ('+0.0596|+0.0601|+0.0599|+0.05', ),...
         deviation = np.array([e[0].split('|') for e in data])
-        project_no = np.array([e[1] for e in data])
+        project_no = np.array([e[1] for e in data]) 
         return deviation, project_no
 
-class MeterInfoReader:
+class InfoData(Data):
     def __init__(self, meter_id, info):
         self._meter_id = meter_id
         self._info = info
@@ -59,4 +64,5 @@ class MeterInfoReader:
 
 if __name__ == '__main__':
     # print(DeviationReader(meter_id='6718967118237250304', power_type='0', component='1').read())
-    print(MeterIDReader('910003622190').read())
+    print(IdData('910003622190').read())
+

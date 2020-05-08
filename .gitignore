@@ -11,8 +11,12 @@ Desktop.ini
 dist
 build
 
+# MS-Acess
+*.ldb
+
 # My configurations:
 test
 
 # VIM
 *\~
+*.swp
