@@ -3,7 +3,7 @@ import numpy as np
 import textwrap
 
 
-class AccessCursor:
+class _AccessCursor(object):
     def __init__(self, mdb_filepath):
         self.conn_str = (
         'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
@@ -13,20 +13,20 @@ class AccessCursor:
     def get_cursor(self):
         try:
             cnxn = pyodbc.connect(self.conn_str)
-            _cursor = cnxn.cursor()
+            cursor = cnxn.cursor()
         except Exception:
             raise Exception('database unconnected.')
-        return _cursor
+        return cursor
 
 
-class Data(object):
-    _cursor = AccessCursor(r'data/ClouMeterData_original.mdb').get_cursor()
+class _Data(object):
+    _cursor = _AccessCursor(r'data/ClouMeterData_original.mdb').get_cursor()
 
     def read(self):
         raise Exception("Data.read() not implemented.")
 
 
-class IdData(Data):
+class IdData(_Data):
     """docstring for MeterIDReader"""
     def __init__(self, meter_address):
         self._meter_address = meter_address
@@ -40,7 +40,8 @@ class IdData(Data):
         data = self._cursor.execute(sql).fetchone()
         return data[0]
 
-class DeviationData(Data):
+
+class DeviationData(_Data):
     def __init__(self, meter_id, power_type, component, error_type='0'):
         self._meter_id = meter_id
         self._error_type = error_type
@@ -71,7 +72,8 @@ class DeviationData(Data):
         project_no = np.array([e[1] for e in data]) 
         return deviation, project_no
 
-class InfoData(Data):
+
+class InfoData(_Data):
     def __init__(self, meter_id, info):
         self._meter_id = meter_id
         self._info = info
