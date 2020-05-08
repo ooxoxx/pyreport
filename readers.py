@@ -32,7 +32,7 @@ class DeviationReader:
         elif self._component == 'balanced':
             component_sql = f"AND CHR_COMPONENT = '{self._component}'"
         else:
-            raise Exception('component input error.')
+            raise Exception('component参数有误')
         sql = textwrap.dedent(f"""
             SELECT AVR_ERROR_MORE, AVR_PROJECT_NO
             FROM METER_ERROR 
