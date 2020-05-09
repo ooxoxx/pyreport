@@ -27,23 +27,23 @@ class _Data(object):
 
 
 class IdData(_Data):
-    """docstring for MeterIDReader"""
     def __init__(self, meter_address):
         self._meter_address = meter_address
-
-    def read(self):
         sql = textwrap.dedent(f"""
             SELECT PK_LNG_METER_ID
             FROM METER_INFO
             WHERE AVR_ADDRESS = '{self._meter_address}'
             """)
         data = self._cursor.execute(sql).fetchone()
-        return data[0]
+        self._meter_id = numpy.array([data[0]])
+
+    def read(self):
+        return self._meter_id
 
 
 class DeviationData(_Data):
-    def __init__(self, meter_id, power_type, component, error_type='0'):
-        self._meter_id = meter_id
+    def __init__(self, id_data, power_type, component, error_type='0'):
+        self._meter_id = id_data.read()
         self._error_type = error_type
         power_type_dict = {
                 'active': '0',
