@@ -75,22 +75,23 @@ class JiduForm(_Form):
 
 
 if __name__ == "__main__":
+    # Block((3, (0, 1)), IdData('910003688786')).fill()
+    # data = DeviationData(IdData('910003688786'), 'active', 'balanced')
+    # Block((3, (4, 3)), data).fill()
     from data import IdData
-    meter_addr_list = [
-                '910003688786',
-                '910003688789',
-                '910003688791',
-                '910003688787',
-                '910003688788',
-                '910003688790'
-                ]
+    import configparser as cp
+    import json
+    config = cp.ConfigParser()
+    config.read('config.ini')
+    temp = config.get('input', 'meter_addr_list')
+    meter_addr_list = list(map(str, json.loads(temp)))
+    print(meter_addr_list)
+    print('wait please.')
     for i, addr in enumerate(meter_addr_list):
+        print(f'{addr} processing.')
         id_data = IdData(addr)
         if i < 5:
             DeviationForm(id_data).fill()
         JiduForm(id_data).fill()
-
-    # Block((3, (0, 1)), IdData('910003688786')).fill()
-    # data = DeviationData(IdData('910003688786'), 'active', 'balanced')
-    # Block((3, (4, 3)), data).fill()
     Block.save()
+    print('done.')
