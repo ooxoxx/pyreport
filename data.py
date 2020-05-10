@@ -1,6 +1,7 @@
 import pyodbc
 import numpy as np
 import textwrap
+import configparser as cp
 
 
 class _AccessCursor(object):
@@ -20,7 +21,13 @@ class _AccessCursor(object):
 
 
 class _Data(object):
-    _cursor = _AccessCursor(r'data/ClouMeterData_original.mdb').get_cursor()
+    def __new__(cls, *args, **kargs):
+        config = cp.ConfigParser()
+        config.read('./config.ini')
+        mdb_filepath = config.get('access', 'mdb_filepath')
+        cls._cursor = _AccessCursor(mdb_filepath).get_cursor()
+        instance = object.__new__(cls)
+        return instance
 
     def read(self):
         raise Exception("Data.read() not implemented.")
