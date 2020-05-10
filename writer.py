@@ -1,4 +1,7 @@
 from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_ROW_HEIGHT_RULE
+from docx.shared import Cm
 
 
 class Writer:
@@ -6,17 +9,20 @@ class Writer:
         self._doc = Document(file_path)
         self._tables = self._doc.tables
 
-    def write(self, table_id, data, start_pos):
+    def write(self, table_id, array, start_pos):
         _table = self._tables[table_id]
-        r_num, c_num = data.shape
+        r_num, c_num = array.shape
         r1st, c1st = start_pos
         rows = _table.rows[r1st:r1st+r_num]
-        data_row_cursor = 0
+        assert r_num == len(rows)
+        row_cursor = 0
         for row in rows:
             unique_cells = []
-            data_column_cursor = 0
+            col_cursor = 0
             column_count = 0
             for cell in row.cells:
+                if col_cursor == c_num:
+                    break
                 if cell in unique_cells:
                     continue
                 else:
@@ -25,22 +31,27 @@ class Writer:
                         column_count += 1
                         continue
                     else:
-                        cell.text = data[data_row_cursor, data_column_cursor]
-                        data_column_cursor += 1
-            data_row_cursor += 1
+                        paragraph = cell.paragraphs[0]
+                        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        paragraph.text = array[row_cursor, col_cursor]
+                        col_cursor += 1
+            row_cursor += 1
+        for row in _table.rows:
+            row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
+            row.height = Cm(0.55)
 
-    def _write(self, table_id, data, start_pos):
+    def _write(self, table_id, array, start_pos):
         _table = self._tables[table_id]
-        r_num, c_num = data.shape
+        r_num, c_num = array.shape
         r1st, c1st = start_pos
         rows = _table.rows[r1st:r1st+r_num]
         cols_num = len(rows[0].cells)
-        data_row_cursor = 0
+        row_cursor = 0
         for row in rows:
             left = 0
             right = 1
             count = 0
-            data_column_cursor = 0
+            col_cursor = 0
             cells = row.cells
             while right < cols_num and count < c1st + c_num:
                 if id(cells[left]) == id(cells[right]):
@@ -53,45 +64,36 @@ class Writer:
                     if count < c1st:
                         continue
                     else:
-                        cells[left].text = data[data_row_cursor, data_column_cursor]
-                        data_column_cursor += 1
-            data_row_cursor += 1
+                        cells[left].text = array[row_cursor, col_cursor]
+                        col_cursor += 1
+            row_cursor += 1
 
-    def _write3(self, table_id, data, start_pos):
+    def _write3(self, table_id, array, start_pos):
         _table = self._tables[table_id]
-        r_num, c_num = data.shape
+        r_num, c_num = array.shape
         r1st, c1st = start_pos
         rows = _table.rows[r1st:r1st+r_num]
-        data_row_cursor = 0
+        row_cursor = 0
         for row in rows:
-            data_column_cursor = 0
+            col_cursor = 0
             cells = row.cells
             unique_cells = sorted(list(set(cells)), key=cells.index)
             for cell in unique_cells[c1st:c1st+c_num]:
-                cell.text = data[data_row_cursor, data_column_cursor]
-                data_column_cursor += 1
-            data_row_cursor += 1
-
-    def test_save(self):
-        import time
-        time_stamp = time.strftime('%m%d%H%M%S', time.localtime())
-        self._doc.save('test/test'+ time_stamp +'.docx')
+                cell.text = array[row_cursor, col_cursor]
+                col_cursor += 1
+            row_cursor += 1
 
     def save(self):
-        pass
-
+        import time
+        time_stamp = time.strftime('%m%d%H%M%S', time.localtime())
+        self._doc.save('test/test' + time_stamp + '.docx')
 
 
 if __name__ == '__main__':
     writer = Writer('data/1抽检原始记录A1级三相外置.docx')
     # for i in range(10):
-        # writer.write(3, None, (4+i//4,6+i%4))
+    #     writer.write(3, None, (4+i//4,6+i%4))
     import numpy as np
-    data = np.arange(15*4).reshape(15,4).astype(str)
-    # from timeit import timeit
-    # print(f"write3={timeit('writer.write3(3, data, (4,3))', number=100, globals=globals())}")
-    # print(f"write2={timeit('writer.write2(3, data, (4,3))', number=100, globals=globals())}")
-    # print(f"write={timeit('writer.write(3, data, (4,3))', number=100, globals=globals())}")
-    writer.write(3, data, (4,3))
-    writer.test_save()
-
+    data = np.arange(15*4).reshape(15, 4).astype(str)
+    writer.write(3, data, (4, 3))
+    writer.save()
