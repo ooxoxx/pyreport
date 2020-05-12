@@ -2,12 +2,16 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ROW_HEIGHT_RULE
 from docx.shared import Cm
+import os
+import re
 
 
 class Writer:
+
     def __init__(self, file_path):
         self._doc = Document(file_path)
         self._tables = self._doc.tables
+        self._file_path = file_path
 
     def write(self, table_id, array, start_pos):
         _table = self._tables[table_id]
@@ -50,8 +54,11 @@ class Writer:
 
     def save(self):
         import time
-        time_stamp = time.strftime('%m%d%H%M%S', time.localtime())
-        self._doc.save('test/test' + time_stamp + '.docx')
+        time_stamp = time.strftime('%m%d_%H%M%S_', time.localtime())
+        filename = os.path.basename(self._file_path)
+        if re.compile(r'^\d').match(filename):
+            filename = filename[1:]
+        self._doc.save('test/' + time_stamp + filename)
 
 
 if __name__ == '__main__':
