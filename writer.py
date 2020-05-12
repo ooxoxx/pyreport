@@ -40,7 +40,8 @@ class Writer:
                 paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 paragraph.text = array[row_cursor, col_cursor]
                 col_cursor += 1
-            row_cursor += 1
+            if col_cursor == c_num:
+                row_cursor += 1
             if this_tc is row_prev_tc:
                 continue
         for row in _table.rows:
