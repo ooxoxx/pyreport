@@ -1,5 +1,7 @@
 from writer import Writer
-from data import DeviationData, JiduData
+from data import DeviationData, JiduData, XuliangData, BianchaData, \
+        YizhixingData, YizhixingMeanData, FuzaidianliuData, \
+        FuzaidianliuAggrData
 
 
 class Block(object):
@@ -74,10 +76,49 @@ class JiduForm(_Form):
         JiduForm._count += 1
 
 
+class XuliangForm(_Form):
+
+    def fill(self):
+        data = XuliangData(self._id_data)
+        Block((28, (3, 3)), data).fill()
+        Block((28, (0, 1)), self._id_data).fill()
+
+
+class BianchaForm(_Form):
+
+    def fill(self):
+        data = BianchaData(self._id_data)
+        Block((29, (4, 2)), data).fill()
+        Block((29, (0, 1)), self._id_data).fill()
+
+
+class YizhixingForm(_Form):
+
+    _count = 0
+    _yzx_list = []
+
+    def fill(self):
+        data = YizhixingData(self._id_data)
+        Block((30, (2+3*self._count, 3)), data).fill()
+        Block((30, (2+3*self._count, 0)), self._id_data).fill()
+        self._yzx_list.append(data)
+        YizhixingForm._count += 1
+        if self._count == 3:
+            data = YizhixingMeanData(self._yzx_list)
+            Block((30, (2, 6)), data).fill()
+
+
+class FuzaidianliuForm(_Form):
+
+    def fill(self):
+        data = FuzaidianliuData(self._id_data)
+        Block((31, (2, 3)), data).fill()
+        data = FuzaidianliuAggrData(data)
+        Block((31, (2, 7)), data).fill()
+        Block((31, (2, 0)), self._id_data).fill()
+
+
 if __name__ == "__main__":
-    # Block((3, (0, 1)), IdData('910003688786')).fill()
-    # data = DeviationData(IdData('910003688786'), 'active', 'balanced')
-    # Block((3, (4, 3)), data).fill()
     from data import IdData
     import configparser as cp
     import json
@@ -85,13 +126,11 @@ if __name__ == "__main__":
     config.read('config.ini')
     temp = config.get('input', 'meter_addr_list')
     meter_addr_list = list(map(str, json.loads(temp)))
+    id_data_list = [IdData(addr) for addr in meter_addr_list]
     print(meter_addr_list)
     print('wait please.')
-    for i, addr in enumerate(meter_addr_list):
-        print(f'{addr} processing.')
-        id_data = IdData(addr)
-        if i < 5:
-            DeviationForm(id_data).fill()
-        JiduForm(id_data).fill()
+
+    Block((29, (0, 1)), id_data_list[0]).fill()
+
     Block.save()
     print('done.')

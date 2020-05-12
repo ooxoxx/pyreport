@@ -5,6 +5,7 @@ import configparser as cp
 
 
 class _AccessCursor(object):
+
     def __init__(self, mdb_filepath):
         self.conn_str = (
             'DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};'
@@ -21,6 +22,7 @@ class _AccessCursor(object):
 
 
 class _Data(object):
+
     def __new__(cls, *args, **kargs):
         config = cp.ConfigParser()
         config.read('./config.ini')
@@ -29,11 +31,15 @@ class _Data(object):
         instance = object.__new__(cls)
         return instance
 
+    def __init__(self, id_data):
+        self._meter_id = id_data.meter_id
+
     def read(self):
         raise Exception("Data.read() not implemented.")
 
 
 class IdData(_Data):
+
     def __init__(self, meter_address):
         self._meter_address = meter_address
         sql = textwrap.dedent(f"""
@@ -85,6 +91,7 @@ class DeviationData(_Data):
 
 
 class JiduData(_Data):
+
     def __init__(self, id_data):
         self._meter_id = id_data.meter_id
 
@@ -105,23 +112,143 @@ class JiduData(_Data):
         分时 = 尖峰平谷.sum(axis=1)
         总 = data[:, -1]
         误差 = 总 - 分时
-        data = np.c_[尖峰平谷, 分时, 总, 误差]
-        temp = [f'{e:.2f}' for e in data.ravel()]
-        data = np.array(temp).reshape(data.shape)
+        temp1 = np.c_[尖峰平谷, 分时, 总]
+        temp = [f'{e:.2f}' for e in temp1.ravel()]
+        temp = np.array(temp).reshape(temp1.shape)
+        误差 = np.array(list(map(lambda e: f'{e:+.2f}', 误差)))
+        data = np.c_[temp, 误差]
         return data
 
 
-class InfoData(_Data):
-    def __init__(self, meter_id, info):
-        self._meter_id = meter_id
-        self._info = info
+class XuliangData(_Data):
 
     def read(self):
-        pass
+        sql = textwrap.dedent(f"""
+                SELECT AVR_VALUE
+                FROM METER_COMMUNICATION
+                WHERE FK_LNG_METER_ID = '{self._meter_id}'
+                AND AVR_PROJECT_NO LIKE '01_11'
+                ORDER BY AVR_PROJECT_NO DESC
+                """)
+        data = self._cursor.execute(sql).fetchall()
+        temp = np.array([e[0].split('|') for e in data])
+        标准 = temp[:, 0]
+        实际 = np.array(list(map(lambda e: f'{float(e):.4f}', temp[:, 1])))
+        误差 = np.array(list(map(lambda e: f'{float(e):+.2f}', temp[:, 2])))
+        return np.c_[标准, 实际, 误差]
+
+
+class BianchaData(_Data):
+
+    def read(self):
+        sql = textwrap.dedent(f"""
+                SELECT AVR_DATAS_1, AVR_DATAS_2
+                FROM METER_CONSISTENCY_DATA
+                WHERE FK_LNG_METER_ID = '{self._meter_id}'
+                AND AVR_ITEM_TYPE LIKE '2_%'
+                ORDER BY AVR_ITEM_TYPE
+                """)
+        data = self._cursor.execute(sql).fetchall()
+        data = np.array(data)
+        left = data[:, 0]
+        right = data[:, 1]
+        left = np.array(list(map(lambda x: x.split('|')[:3], left)))
+        right = np.array(list(map(lambda x: x.split('|')[:3], right)))
+        temp = right[:, -1].astype('float') - left[:, -1].astype('float')
+        误差变差 = np.array(list(map(lambda x: f"{x:+.4f}", temp)))
+        修约后 = np.array(list(map(lambda x: f"{x:+.2f}", temp)))
+        return np.c_[left, right, 误差变差, 修约后]
+
+
+class YizhixingData(_Data):
+
+    def read(self):
+        sql = textwrap.dedent(f"""
+                SELECT AVR_DATAS_1
+                FROM METER_CONSISTENCY_DATA
+                WHERE FK_LNG_METER_ID = '{self._meter_id}'
+                AND AVR_ITEM_TYPE LIKE '1_%'
+                ORDER BY AVR_ITEM_TYPE """)
+        data = self._cursor.execute(sql).fetchall()
+        data = np.array(list(map(lambda x: x[0].split('|')[:3], data)))
+        self.avr = data.astype('float').mean(axis=1)
+        return data
+
+
+class YizhixingMeanData(_Data):
+
+    def __init__(self, yzx_list):
+        avr_list = list(map(lambda x: x.avr, yzx_list))
+        self._avr_matrix = np.array(avr_list).T
+        # print('avr=', self._avr_matrix)
+
+    def read(self):
+        同批次平均 = self._avr_matrix.mean(axis=1)
+        # print('tpc=', 同批次平均.reshape(3,1))
+        变化值_matrix = self._avr_matrix - 同批次平均.reshape(3, 1)
+        # print('bhz_matrix=', 变化值_matrix)
+        temp_变化值 = np.r_[tuple(变化值_matrix[:, i] for i in range(3))]
+        # print(temp_变化值)
+        temp_同批次 = np.r_[(同批次平均,)*3]
+        col1 = list(map(lambda x: f"{x:+.4f}", temp_变化值))
+        col2 = list(map(lambda x: f"{x:+.2f}", temp_变化值))
+        col3 = list(map(lambda x: f"{x:+.4f}", temp_同批次))
+        return np.c_[col1, col2, col3]
+
+
+class FuzaidianliuData(_Data):
+
+    def read(self):
+        sql = textwrap.dedent(f"""
+                SELECT AVR_DATAS_1, AVR_DATAS_2
+                FROM METER_CONSISTENCY_DATA
+                WHERE FK_LNG_METER_ID = '{self._meter_id}'
+                AND AVR_ITEM_TYPE LIKE '3_%'
+                ORDER BY AVR_ITEM_TYPE
+                """)
+        data = self._cursor.execute(sql).fetchall()
+        data = np.array(data)
+        left = data[:, 0]
+        right = data[:, 1]
+        left = np.array(list(map(lambda x: x.split('|')[:3], left)))
+        right = np.array(list(map(lambda x: x.split('|')[:3], right)))
+        self.left = left
+        self.right = right
+        return np.r_[left, right[::-1]]
+
+
+class FuzaidianliuAggrData(_Data):
+
+    def __init__(self, fzdl_data):
+        self._left = fzdl_data.left[:, -1].astype('float')
+        self._right = fzdl_data.right[:, -1].astype('float')
+
+    def read(self):
+        diff = self._right - self._left
+        col1 = list(map(lambda x: f"{x:+.4f}", diff))
+        col2 = list(map(lambda x: f"{x:+.2f}", diff))
+        res = np.c_[col1, col2]
+        return res
 
 
 if __name__ == '__main__':
     id_data = IdData('910003622190')
-    print(DeviationData(id_data, 'active', 'balanced').read())
-    print(JiduData(id_data).read())
+    # print(DeviationData(id_data, 'active', 'balanced').read())
+    # print(JiduData(id_data).read())
+    # print(XuliangData(id_data).read())
+    # print(BianchaData(id_data).read())
     # print(IdData('910003622190').read())
+    # yd = YizhixingData(id_data)
+    # print(yd.read())
+    # lst = []
+
+    # class Test:
+        # pass
+    # for i in range(3):
+        # e = Test()
+        # e.avr = np.array([0.2, 0.3, 0.4])*(i+1)
+        # lst.append(e)
+    # print(YizhixingMeanData(lst).read())
+    data = FuzaidianliuData(id_data)
+    print(data.read())
+    print(FuzaidianliuAggrData(data).read())

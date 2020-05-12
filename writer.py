@@ -13,29 +13,36 @@ class Writer:
         _table = self._tables[table_id]
         r_num, c_num = array.shape
         r1st, c1st = start_pos
-        rows = _table.rows[r1st:r1st+r_num]
-        assert r_num == len(rows)
         row_cursor = 0
-        for row in rows:
-            unique_cells = []
+        row_prev_tc = None
+        for row in _table.rows[r1st:]:
+            if row_cursor == r_num:
+                break
+            col_prev_tc = None
             col_cursor = 0
-            column_count = 0
+            unique_col_count = 0
             for cell in row.cells:
+                this_tc = cell._tc
                 if col_cursor == c_num:
                     break
-                if cell in unique_cells:
+                if this_tc is col_prev_tc:
                     continue
-                else:
-                    unique_cells.append(cell)
-                    if column_count < c1st:
-                        column_count += 1
-                        continue
+                col_prev_tc = this_tc
+                if unique_col_count < c1st:
+                    unique_col_count += 1
+                    continue
+                if col_cursor == 0:
+                    if this_tc is row_prev_tc:
+                        break
                     else:
-                        paragraph = cell.paragraphs[0]
-                        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        paragraph.text = array[row_cursor, col_cursor]
-                        col_cursor += 1
+                        row_prev_tc = this_tc
+                paragraph = cell.paragraphs[0]
+                paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                paragraph.text = array[row_cursor, col_cursor]
+                col_cursor += 1
             row_cursor += 1
+            if this_tc is row_prev_tc:
+                continue
         for row in _table.rows:
             row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
             row.height = Cm(0.55)
@@ -91,8 +98,6 @@ class Writer:
 
 if __name__ == '__main__':
     writer = Writer('data/1抽检原始记录A1级三相外置.docx')
-    # for i in range(10):
-    #     writer.write(3, None, (4+i//4,6+i%4))
     import numpy as np
     data = np.arange(15*4).reshape(15, 4).astype(str)
     writer.write(3, data, (4, 3))
