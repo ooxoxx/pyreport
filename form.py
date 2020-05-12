@@ -126,11 +126,10 @@ if __name__ == "__main__":
     config.read('config.ini')
     temp = config.get('input', 'meter_addr_list')
     meter_addr_list = list(map(str, json.loads(temp)))
+
     id_data_list = [IdData(addr) for addr in meter_addr_list]
     print(meter_addr_list)
     print('wait please.')
-
     Block((29, (0, 1)), id_data_list[0]).fill()
-
     Block.save()
     print('done.')
