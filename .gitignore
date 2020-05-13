@@ -22,3 +22,6 @@ test
 *\~
 *.swp
 .vim
+
+# specified
+data/
