@@ -1,12 +1,25 @@
 from form import DeviationForm, JiduForm, XuliangForm, \
-        BianchaForm, YizhixingForm, FuzaidianliuForm
+    BianchaForm, YizhixingForm, FuzaidianliuForm
 from data import IdData
 import configparser as cp
 import json
-config = cp.ConfigParser()
-config.read('config.ini')
-temp = config.get('input', 'meter_addr_list')
-meter_addr_list = list(map(str, json.loads(temp)))
+
+
+class ReportsFactory(object):
+    """Factory produces reports."""
+    def __init__(self):
+        """ all read from config.ini """
+        config = cp.ConfigParser()
+        config.read('config.ini')
+        addr_list_json = config.get('input', 'meter_addr_list')
+        self.meter_addr_list = list(map(str, json.loads(addr_list_json)))
+        self.meter_type = config.get('input', 'meter_type')
+
+    def report(self):
+        """ select proper report to write. """
+        report_ = globals()[self.meter_type]
+
+
 id_data_list = [IdData(addr) for addr in meter_addr_list]
 print(meter_addr_list)
 print('wait please.')
