@@ -7,11 +7,10 @@ import re
 
 
 class Writer:
-
-    def __init__(self, file_path):
-        self._doc = Document(file_path)
+    def __init__(self, template_file_path):
+        self._doc = Document(template_file_path)
         self._tables = self._doc.tables
-        self._file_path = file_path
+        self._file_path = template_file_path
 
     def write(self, table_id, array, start_pos):
         _table = self._tables[table_id]
@@ -64,6 +63,6 @@ class Writer:
 if __name__ == '__main__':
     writer = Writer('data/1抽检原始记录A1级三相外置.docx')
     import numpy as np
-    data = np.arange(15*4).reshape(15, 4).astype(str)
+    data = np.arange(15 * 4).reshape(15, 4).astype(str)
     writer.write(3, data, (4, 3))
     writer.save()
