@@ -51,23 +51,23 @@ class _LinuxAccess(object):
         return cursor
 
 
-class DataInterface(object):
+class DataAbstractClass(object):
     def __new__(cls, *args, **kargs):
         config = cp.ConfigParser()
         config.read('./config.ini')
         mdb_filepath = config.get('access', 'mdb_filepath')
         cls._cursor = _LinuxAccess(mdb_filepath).get_cursor()
-        instance = object.__new__(cls)
+        instance = super().__new__(cls, *args, **kargs)
         return instance
 
     def __init__(self, id_data):
         self._meter_id = id_data.meter_id
 
     def read(self):
-        raise Exception("Data.read() not implemented.")
+        raise NotImplementedError
 
 
-class IdData(DataInterface):
+class IdData(DataAbstractClass):
     def __init__(self, meter_address):
         self._meter_address = meter_address
         sql = textwrap.dedent(f"""
@@ -87,7 +87,7 @@ class IdData(DataInterface):
         return self._meter_id
 
 
-class DeviationData(DataInterface):
+class DeviationData(DataAbstractClass):
     def __init__(self, id_data, power_type, component, error_type='0'):
         self._meter_id = id_data.meter_id
         self._error_type = error_type
@@ -116,7 +116,7 @@ class DeviationData(DataInterface):
         return deviation
 
 
-class JiduData(DataInterface):
+class JiduData(DataAbstractClass):
     def __init__(self, id_data):
         self._meter_id = id_data.meter_id
 
@@ -146,7 +146,7 @@ class JiduData(DataInterface):
         return data
 
 
-class XuliangData(DataInterface):
+class XuliangData(DataAbstractClass):
     def read(self):
         sql = textwrap.dedent(f"""
                 SELECT AVR_VALUE
@@ -164,7 +164,7 @@ class XuliangData(DataInterface):
         return np.c_[标准, 实际, 误差]
 
 
-class BianchaData(DataInterface):
+class BianchaData(DataAbstractClass):
     def read(self):
         sql = textwrap.dedent(f"""
                 SELECT AVR_DATAS_1, AVR_DATAS_2
@@ -186,7 +186,7 @@ class BianchaData(DataInterface):
         return np.c_[left, right, 误差变差, 修约后]
 
 
-class YizhixingData(DataInterface):
+class YizhixingData(DataAbstractClass):
     def read(self):
         sql = textwrap.dedent(f"""
                 SELECT AVR_DATAS_1
@@ -201,7 +201,7 @@ class YizhixingData(DataInterface):
         return data
 
 
-class YizhixingMeanData(DataInterface):
+class YizhixingMeanData(DataAbstractClass):
     def __init__(self, yzx_list):
         avr_list = list(map(lambda x: x.avr, yzx_list))
         self._avr_matrix = np.array(avr_list).T
@@ -221,7 +221,7 @@ class YizhixingMeanData(DataInterface):
         return np.c_[col1, col2, col3]
 
 
-class FuzaidianliuData(DataInterface):
+class FuzaidianliuData(DataAbstractClass):
     def read(self):
         sql = textwrap.dedent(f"""
                 SELECT AVR_DATAS_1, AVR_DATAS_2
@@ -242,7 +242,7 @@ class FuzaidianliuData(DataInterface):
         return np.r_[left, right[::-1]]
 
 
-class FuzaidianliuAggrData(DataInterface):
+class FuzaidianliuAggrData(DataAbstractClass):
     def __init__(self, fzdl_data):
         self._left = fzdl_data.left[:, -1].astype('float')
         self._right = fzdl_data.right[:, -1].astype('float')
