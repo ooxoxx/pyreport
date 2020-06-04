@@ -51,7 +51,7 @@ class _LinuxAccess(object):
         return cursor
 
 
-class _Data(object):
+class DataInterface(object):
     def __new__(cls, *args, **kargs):
         config = cp.ConfigParser()
         config.read('./config.ini')
@@ -67,7 +67,7 @@ class _Data(object):
         raise Exception("Data.read() not implemented.")
 
 
-class IdData(_Data):
+class IdData(DataInterface):
     def __init__(self, meter_address):
         self._meter_address = meter_address
         sql = textwrap.dedent(f"""
@@ -87,7 +87,7 @@ class IdData(_Data):
         return self._meter_id
 
 
-class DeviationData(_Data):
+class DeviationData(DataInterface):
     def __init__(self, id_data, power_type, component, error_type='0'):
         self._meter_id = id_data.meter_id
         self._error_type = error_type
@@ -116,7 +116,7 @@ class DeviationData(_Data):
         return deviation
 
 
-class JiduData(_Data):
+class JiduData(DataInterface):
     def __init__(self, id_data):
         self._meter_id = id_data.meter_id
 
@@ -146,7 +146,7 @@ class JiduData(_Data):
         return data
 
 
-class XuliangData(_Data):
+class XuliangData(DataInterface):
     def read(self):
         sql = textwrap.dedent(f"""
                 SELECT AVR_VALUE
@@ -164,7 +164,7 @@ class XuliangData(_Data):
         return np.c_[标准, 实际, 误差]
 
 
-class BianchaData(_Data):
+class BianchaData(DataInterface):
     def read(self):
         sql = textwrap.dedent(f"""
                 SELECT AVR_DATAS_1, AVR_DATAS_2
@@ -186,7 +186,7 @@ class BianchaData(_Data):
         return np.c_[left, right, 误差变差, 修约后]
 
 
-class YizhixingData(_Data):
+class YizhixingData(DataInterface):
     def read(self):
         sql = textwrap.dedent(f"""
                 SELECT AVR_DATAS_1
@@ -201,7 +201,7 @@ class YizhixingData(_Data):
         return data
 
 
-class YizhixingMeanData(_Data):
+class YizhixingMeanData(DataInterface):
     def __init__(self, yzx_list):
         avr_list = list(map(lambda x: x.avr, yzx_list))
         self._avr_matrix = np.array(avr_list).T
@@ -221,7 +221,7 @@ class YizhixingMeanData(_Data):
         return np.c_[col1, col2, col3]
 
 
-class FuzaidianliuData(_Data):
+class FuzaidianliuData(DataInterface):
     def read(self):
         sql = textwrap.dedent(f"""
                 SELECT AVR_DATAS_1, AVR_DATAS_2
@@ -242,7 +242,7 @@ class FuzaidianliuData(_Data):
         return np.r_[left, right[::-1]]
 
 
-class FuzaidianliuAggrData(_Data):
+class FuzaidianliuAggrData(DataInterface):
     def __init__(self, fzdl_data):
         self._left = fzdl_data.left[:, -1].astype('float')
         self._right = fzdl_data.right[:, -1].astype('float')

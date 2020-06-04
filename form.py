@@ -27,19 +27,19 @@ class Block(object):
         cls._writer.save()
 
 
-class _Form(object):
+class FormAbstractClass(object):
     def __init__(self, id_data):
         self._id_data = id_data
 
     def fill(self):
-        raise Exception('_Form.fill() not implemented.')
+        raise NotImplementedError
 
     @classmethod
     def save(cls):
         Block.save()
 
 
-class DeviationForm(_Form):
+class DeviationForm(FormAbstractClass):
 
     _count = 0
 
@@ -60,7 +60,7 @@ class DeviationForm(_Form):
         DeviationForm._count += 1
 
 
-class JiduForm(_Form):
+class JiduForm(FormAbstractClass):
 
     _count = 0
 
@@ -71,21 +71,21 @@ class JiduForm(_Form):
         JiduForm._count += 1
 
 
-class XuliangForm(_Form):
+class XuliangForm(FormAbstractClass):
     def fill(self):
         data = XuliangData(self._id_data)
         Block((28, (3, 3)), data).fill()
         Block((28, (0, 1)), self._id_data).fill()
 
 
-class BianchaForm(_Form):
+class BianchaForm(FormAbstractClass):
     def fill(self):
         data = BianchaData(self._id_data)
         Block((29, (4, 2)), data).fill()
         Block((29, (0, 1)), self._id_data).fill()
 
 
-class YizhixingForm(_Form):
+class YizhixingForm(FormAbstractClass):
 
     _count = 0
     _yzx_list = []
@@ -101,7 +101,7 @@ class YizhixingForm(_Form):
             Block((30, (2, 6)), data).fill()
 
 
-class FuzaidianliuForm(_Form):
+class FuzaidianliuForm(FormAbstractClass):
     def fill(self):
         data = FuzaidianliuData(self._id_data)
         Block((31, (2, 3)), data).fill()
