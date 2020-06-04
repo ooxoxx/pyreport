@@ -1,7 +1,5 @@
 from writer import Writer
-from data import DeviationData, JiduData, XuliangData, BianchaData, \
-        YizhixingData, YizhixingMeanData, FuzaidianliuData, \
-        FuzaidianliuAggrData
+import data as d
 
 
 class Block(object):
@@ -55,7 +53,7 @@ class DeviationForm(FormAbstractClass):
             # print(tid, spos, ptype, comp)
             data = self._id_data
             Block((tid + 2 * DeviationForm._count, (0, 1)), data).fill()
-            data = DeviationData(self._id_data, ptype, comp)
+            data = d.DeviationData(self._id_data, ptype, comp)
             Block((tid + 2 * DeviationForm._count, spos), data).fill()
         DeviationForm._count += 1
 
@@ -65,7 +63,7 @@ class JiduForm(FormAbstractClass):
     _count = 0
 
     def fill(self):
-        data = JiduData(self._id_data)
+        data = d.JiduData(self._id_data)
         Block((26, (1 + 3 * self._count, 0)), self._id_data).fill()
         Block((26, (1 + 3 * self._count, 2)), data).fill()
         JiduForm._count += 1
@@ -73,14 +71,14 @@ class JiduForm(FormAbstractClass):
 
 class XuliangForm(FormAbstractClass):
     def fill(self):
-        data = XuliangData(self._id_data)
+        data = d.XuliangData(self._id_data)
         Block((28, (3, 3)), data).fill()
         Block((28, (0, 1)), self._id_data).fill()
 
 
 class BianchaForm(FormAbstractClass):
     def fill(self):
-        data = BianchaData(self._id_data)
+        data = d.BianchaData(self._id_data)
         Block((29, (4, 2)), data).fill()
         Block((29, (0, 1)), self._id_data).fill()
 
@@ -91,27 +89,26 @@ class YizhixingForm(FormAbstractClass):
     _yzx_list = []
 
     def fill(self):
-        data = YizhixingData(self._id_data)
+        data = d.YizhixingData(self._id_data)
         Block((30, (2 + 3 * self._count, 3)), data).fill()
         Block((30, (2 + 3 * self._count, 0)), self._id_data).fill()
         self._yzx_list.append(data)
         YizhixingForm._count += 1
         if self._count == 3:
-            data = YizhixingMeanData(self._yzx_list)
+            data = d.YizhixingMeanData(self._yzx_list)
             Block((30, (2, 6)), data).fill()
 
 
 class FuzaidianliuForm(FormAbstractClass):
     def fill(self):
-        data = FuzaidianliuData(self._id_data)
+        data = d.FuzaidianliuData(self._id_data)
         Block((31, (2, 3)), data).fill()
-        data = FuzaidianliuAggrData(data)
+        data = d.FuzaidianliuAggrData(data)
         Block((31, (2, 7)), data).fill()
         Block((31, (2, 0)), self._id_data).fill()
 
 
 if __name__ == "__main__":
-    from data import IdData
     import configparser as cp
     import json
     config = cp.ConfigParser()
@@ -119,7 +116,7 @@ if __name__ == "__main__":
     temp = config.get('input', 'meter_addr_list')
     meter_addr_list = list(map(str, json.loads(temp)))
 
-    id_data_list = [IdData(addr) for addr in meter_addr_list]
+    id_data_list = [d.IdData(addr) for addr in meter_addr_list]
     print(meter_addr_list)
     print('wait please.')
     Block((29, (0, 1)), id_data_list[0]).fill()

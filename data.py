@@ -57,8 +57,7 @@ class DataAbstractClass(object):
         config.read('./config.ini')
         mdb_filepath = config.get('access', 'mdb_filepath')
         cls._cursor = _LinuxAccess(mdb_filepath).get_cursor()
-        instance = super().__new__(cls, *args, **kargs)
-        return instance
+        return super().__new__(cls)
 
     def __init__(self, id_data):
         self._meter_id = id_data.meter_id
