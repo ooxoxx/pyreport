@@ -32,6 +32,10 @@ class Block(dt.DataAbstractClass):
         self._writer.save()
 
 
+class IdBlock(Block, dt.IdData):
+    pass
+
+
 class JiduBlock(Block, dt.JiduData):
     pass
 
