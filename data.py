@@ -73,20 +73,23 @@ class DataAbstractClass(object):
 class IdData(DataAbstractClass):
     def __init__(self, meter_address):
         self._meter_address = meter_address
+        self._meter_id = None
 
     def read(self):
         return np.array([self._meter_address]).reshape(1, 1)
 
     @property
     def meter_id(self):
-        sql = textwrap.dedent(f"""
-            SELECT PK_LNG_METER_ID
-            FROM METER_INFO
-            WHERE AVR_ADDRESS = '{self._meter_address}'
-            """)
-        _cursor.execute(sql)
-        data = _cursor.fetchone()
-        return data[0]
+        if self._meter_id is None:
+            sql = textwrap.dedent(f"""
+                SELECT PK_LNG_METER_ID
+                FROM METER_INFO
+                WHERE AVR_ADDRESS = '{self._meter_address}'
+                """)
+            _cursor.execute(sql)
+            data = _cursor.fetchone()
+            self._meter_id = data[0]
+        return self._meter_id
 
 
 class DeviationData(DataAbstractClass):
