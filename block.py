@@ -20,7 +20,35 @@ class IdBlock(Block, dt.IdData):
     pass
 
 
+class DeviationBlock(Block, dt.DeviationData):
+    pass
+
+
 class JiduBlock(Block, dt.JiduData):
+    pass
+
+
+class XuliangBlock(Block, dt.XuliangData):
+    pass
+
+
+class BianchaBlock(Block, dt.BianchaData):
+    pass
+
+
+class YizhixingBlock(Block, dt.YizhixingData):
+    pass
+
+
+class YizhixingMeanBlock(Block, dt.YizhixingMeanData):
+    pass
+
+
+class FuzaidianliuBlock(Block, dt.FuzaidianliuData):
+    pass
+
+
+class FuzaidianliuAggrData(Block, dt.FuzaidianliuAggrData):
     pass
 
 

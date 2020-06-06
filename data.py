@@ -3,6 +3,8 @@ import numpy as np
 import textwrap
 import configparser as cp
 import jaydebeapi
+import platform
+from writer_singleton import writer
 
 
 class _AccessCursor(object):
@@ -56,7 +58,14 @@ class DataAbstractClass(object):
         config = cp.ConfigParser()
         config.read('./config.ini')
         mdb_filepath = config.get('access', 'mdb_filepath')
-        cls._cursor = _LinuxAccess(mdb_filepath).get_cursor()
+        osname = platform.system()
+        if osname == "Linux":
+            access = _LinuxAccess
+        elif osname == "Windows":
+            access = _AccessCursor
+        else:
+            raise Exception('your os not supported.')
+        cls._cursor = access(mdb_filepath).get_cursor()
         return super().__new__(cls)
 
     def __init__(self, id_data):
@@ -64,6 +73,9 @@ class DataAbstractClass(object):
 
     def read(self):
         raise NotImplementedError
+
+    def fill(self, tab_pos, start_cell):
+        writer.write(tab_pos, self.read(), start_cell)
 
 
 class IdData(DataAbstractClass):
