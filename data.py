@@ -1,18 +1,17 @@
-import pyodbc
 import numpy as np
 import textwrap
 import configparser as cp
-import jaydebeapi
 import platform
 from writer_singleton import writer
 
 
-class _AccessCursor(object):
+class _WindowsAccess(object):
     def __init__(self, mdb_filepath):
         driver = '{Microsoft Access Driver (*.mdb, *.accdb)}'
         self.conn_str = (f'DRIVER={driver};DBQ={mdb_filepath};')
 
     def get_cursor(self):
+        import pyodbc
         try:
             cnxn = pyodbc.connect(self.conn_str)
             cursor = cnxn.cursor()
@@ -22,22 +21,11 @@ class _AccessCursor(object):
 
 
 class _LinuxAccess(object):
-    """Docstring for _LinuxAccess. """
     def __init__(self, mdb_filepath):
-        """TODO: to be defined.
-
-        :mdb_filepath: TODO
-
-        """
         self._mdb_filepath = mdb_filepath
 
     def get_cursor(self):
-        """TODO: Docstring for get_cursor.
-
-        :f: TODO
-        :returns: TODO
-
-        """
+        import jaydebeapi
         ucanaccess_jars = [
             "lib/ucanaccess-5.0.0.jar",
             "lib/lib/hsqldb-2.5.0.jar",
@@ -62,7 +50,7 @@ class DataAbstractClass(object):
         if osname == "Linux":
             access = _LinuxAccess
         elif osname == "Windows":
-            access = _AccessCursor
+            access = _WindowsAccess
         else:
             raise Exception('your os not supported.')
         cls._cursor = access(mdb_filepath).get_cursor()
