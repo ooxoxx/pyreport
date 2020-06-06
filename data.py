@@ -41,21 +41,25 @@ class _LinuxAccess(object):
         return cursor
 
 
-class DataAbstractClass(object):
-    def __new__(cls, *args, **kargs):
-        config = cp.ConfigParser()
-        config.read('./config.ini')
-        mdb_filepath = config.get('access', 'mdb_filepath')
-        osname = platform.system()
-        if osname == "Linux":
-            access = _LinuxAccess
-        elif osname == "Windows":
-            access = _WindowsAccess
-        else:
-            raise Exception('your os not supported.')
-        cls._cursor = access(mdb_filepath).get_cursor()
-        return super().__new__(cls)
+def initialize_cursor():
+    config = cp.ConfigParser()
+    config.read('./config.ini')
+    mdb_filepath = config.get('access', 'mdb_filepath')
+    # multi platform support
+    osname = platform.system()
+    if osname == "Linux":
+        access = _LinuxAccess
+    elif osname == "Windows":
+        access = _WindowsAccess
+    else:
+        raise Exception('your os not supported.')
+    return access(mdb_filepath).get_cursor()
 
+
+_cursor = initialize_cursor()
+
+
+class DataAbstractClass(object):
     def __init__(self, id_data):
         self._meter_id = id_data.meter_id
 
@@ -69,21 +73,20 @@ class DataAbstractClass(object):
 class IdData(DataAbstractClass):
     def __init__(self, meter_address):
         self._meter_address = meter_address
-        sql = textwrap.dedent(f"""
-            SELECT PK_LNG_METER_ID
-            FROM METER_INFO
-            WHERE AVR_ADDRESS = '{self._meter_address}'
-            """)
-        self._cursor.execute(sql)
-        data = self._cursor.fetchone()
-        self._meter_id = data[0]
 
     def read(self):
         return np.array([self._meter_address]).reshape(1, 1)
 
     @property
     def meter_id(self):
-        return self._meter_id
+        sql = textwrap.dedent(f"""
+            SELECT PK_LNG_METER_ID
+            FROM METER_INFO
+            WHERE AVR_ADDRESS = '{self._meter_address}'
+            """)
+        _cursor.execute(sql)
+        data = _cursor.fetchone()
+        return data[0]
 
 
 class DeviationData(DataAbstractClass):
@@ -108,8 +111,8 @@ class DeviationData(DataAbstractClass):
                 AND CHR_COMPONENT {self._component} '1'
                 ORDER BY AVR_PROJECT_NO
                 """)
-        self._cursor.execute(sql)
-        data = self._cursor.fetchall()
+        _cursor.execute(sql)
+        data = _cursor.fetchall()
         deviation = np.array([e[0].split('|') for e in data])
         self._project_no = np.array([e[1] for e in data])
         return deviation
@@ -128,8 +131,8 @@ class JiduData(DataAbstractClass):
                 AND AVR_PROJECT_NO <= '00504'
                 ORDER BY AVR_PROJECT_NO
                 """)
-        self._cursor.execute(sql)
-        data = self._cursor.fetchall()
+        _cursor.execute(sql)
+        data = _cursor.fetchall()
         data = np.array([e[0].split('|') for e in data])
         data = data[[3, 2, 1, 4, 0]]
         data = data[:, :3].astype('float').T
@@ -154,8 +157,8 @@ class XuliangData(DataAbstractClass):
                 AND AVR_PROJECT_NO LIKE '01_11'
                 ORDER BY AVR_PROJECT_NO DESC
                 """)
-        self._cursor.execute(sql)
-        data = self._cursor.fetchall()
+        _cursor.execute(sql)
+        data = _cursor.fetchall()
         temp = np.array([e[0].split('|') for e in data])
         标准 = temp[:, 0]
         实际 = np.array(list(map(lambda e: f'{float(e):.4f}', temp[:, 1])))
@@ -172,8 +175,8 @@ class BianchaData(DataAbstractClass):
                 AND AVR_ITEM_TYPE LIKE '2_%'
                 ORDER BY AVR_ITEM_TYPE
                 """)
-        self._cursor.execute(sql)
-        data = self._cursor.fetchall()
+        _cursor.execute(sql)
+        data = _cursor.fetchall()
         data = np.array(data)
         left = data[:, 0]
         right = data[:, 1]
@@ -193,8 +196,8 @@ class YizhixingData(DataAbstractClass):
                 WHERE FK_LNG_METER_ID = '{self._meter_id}'
                 AND AVR_ITEM_TYPE LIKE '1_%'
                 ORDER BY AVR_ITEM_TYPE """)
-        self._cursor.execute(sql)
-        data = self._cursor.fetchall()
+        _cursor.execute(sql)
+        data = _cursor.fetchall()
         data = np.array(list(map(lambda x: x[0].split('|')[:3], data)))
         self.avr = data.astype('float').mean(axis=1)
         return data
@@ -229,8 +232,8 @@ class FuzaidianliuData(DataAbstractClass):
                 AND AVR_ITEM_TYPE LIKE '3_%'
                 ORDER BY AVR_ITEM_TYPE
                 """)
-        self._cursor.execute(sql)
-        data = self._cursor.fetchall()
+        _cursor.execute(sql)
+        data = _cursor.fetchall()
         data = np.array(data)
         left = data[:, 0]
         right = data[:, 1]
