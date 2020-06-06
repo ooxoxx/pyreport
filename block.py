@@ -1,35 +1,19 @@
 import data as dt
-import writer
+from writer_singleton import writer
+
+
+def save_file():
+    writer.save()
+
+
+def set_template(file_path):
+    writer.set_template(file_path)
 
 
 class Block(dt.DataAbstractClass):
-    """Docstring for Block. """
-
-    _writer = None
-
-    def __init__(self, *args, **kargs):
-        """TODO: to be defined.
-
-        :*args: TODO
-        :**kargs: TODO
-
-        """
-        super().__init__(*args, **kargs)
-        if self._writer is None:
-            template_file_path = "./data/1抽检原始记录A1级三相外置.docx"
-            Block._writer = writer.Writer(template_file_path)
-
     def fill(self, tab_pos, start_cell):
-        """TODO: Docstring for fill.
-
-        :tab_pos: TODO
-        :start_cell: TODO
-        :returns: TODO
-
-        """
         data = super().read()
-        self._writer.write(tab_pos, data, start_cell)
-        self._writer.save()
+        writer.write(tab_pos, data, start_cell)
 
 
 class IdBlock(Block, dt.IdData):
