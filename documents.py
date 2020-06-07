@@ -1,4 +1,5 @@
 import os.path
+import re
 import configparser
 
 config = configparser.ConfigParser()
@@ -49,27 +50,38 @@ class OriginalRecordDocument(Document):
         self._id_data_list = [
             self._od.IdData(addr) for addr in meter_addr_list
         ]
+        meter_class = self._id_data_list[0].meter_class
 
-    def set_template(self, template):
+        def get_template(meter_class):
+            if re.search(r'0.2', meter_class):
+                res = '1抽检原始记录A0.2S级三相外置.docx'
+            elif re.search(r'0.5', meter_class):
+                res = '1抽检原始记录A0.5S级三相外置.docx'
+            else:
+                res = '1抽检原始记录A1级三相外置.docx'
+            return res
+
+        self._template = get_template(meter_class)
+
+    def set_template(self):
         # template = '1抽检原始记录A1级三相外置.docx'
-        print(f'writing {os.path.basename(template)} ...')
-        self._od.set_template(os.path.join(template_directory, template))
+        print(f'writing {os.path.basename(self._template)} ...')
+        self._od.set_template(os.path.join(template_directory, self._template))
 
     def build_deviation(self):
+        table_info = [(3, (4, 3), 'active', 'balanced'),
+                      (3, (None, 4), 'active', 'unbalanced'),
+                      (4, (4, 3), 'reversed', 'balanced'),
+                      (4, (None, 4), 'reversed', 'unbalanced'),
+                      (13, (3, 3), 'reactive', 'balanced'),
+                      (14, (3, 4), 'reactive', 'unbalanced')]
         for i, id_data in enumerate(self._id_data_list[:5]):
-            table_info = [(3, (4, 3), 'active', 'balanced'),
-                          (3, (None, 4), 'active', 'unbalanced'),
-                          (4, (4, 3), 'reversed', 'balanced'),
-                          (4, (None, 4), 'reversed', 'unbalanced'),
-                          (13, (3, 3), 'reactive', 'balanced'),
-                          (14, (3, 4), 'reactive', 'unbalanced')]
-            # print(self._id_data._meter_address, self._id_data.meter_id)
             for tid in (3, 4, 13, 14):
                 id_data.fill(tid + 2 * i, (0, 1))
             prev = None
             for tid, spos, ptype, comp in table_info:
-                if spos is None:
-                    spos = 7 + prev.content.shape
+                if spos[0] is None:
+                    spos = (7 + prev.content.shape[0], spos[1])
                 prev = self._od.DeviationData(id_data, ptype, comp)
                 prev.fill(tid + 2 * i, spos)
 

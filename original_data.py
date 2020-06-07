@@ -81,9 +81,8 @@ class Data(object):
     def content(self):
         if self._content is None:
             print('WARNING: report result before original record!')
-            return self.read()
-        else:
-            return self._content
+            self._content = self.read()
+        return self._content
 
 
 class IdData(Data):
@@ -115,8 +114,8 @@ class IdData(Data):
             """)
         _cursor.execute(sql)
         data = _cursor.fetchone()
-        self._meter_id = data[0][0]
-        self._meter_class = data[0][1]
+        self._meter_id = data[0]
+        self._meter_class = data[1]
 
 
 class DeviationData(Data):
