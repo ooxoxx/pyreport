@@ -90,6 +90,7 @@ class IdData(Data):
     def __init__(self, meter_address):
         self._meter_address = meter_address
         self._meter_id = None
+        self._meter_class = None
 
     def read(self):
         return np.array([self._meter_address]).reshape(1, 1)
@@ -97,15 +98,25 @@ class IdData(Data):
     @property
     def meter_id(self):
         if self._meter_id is None:
-            sql = textwrap.dedent(f"""
-                SELECT PK_LNG_METER_ID
-                FROM METER_INFO
-                WHERE AVR_ADDRESS = '{self._meter_address}'
-                """)
-            _cursor.execute(sql)
-            data = _cursor.fetchone()
-            self._meter_id = data[0]
+            self.query_info()
         return self._meter_id
+
+    @property
+    def meter_class(self):
+        if self._meter_class is None:
+            self.query_info()
+        return self._meter_class
+
+    def query_info(self):
+        sql = textwrap.dedent(f"""
+            SELECT PK_LNG_METER_ID, AVR_AR_CLASS
+            FROM METER_INFO
+            WHERE AVR_ADDRESS = '{self._meter_address}'
+            """)
+        _cursor.execute(sql)
+        data = _cursor.fetchone()
+        self._meter_id = data[0][0]
+        self._meter_class = data[0][1]
 
 
 class DeviationData(Data):
