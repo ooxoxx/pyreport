@@ -1,8 +1,8 @@
-import original_data as od
+from original_data import Data
 import numpy as np
 
 
-class Result(od.Data):
+class Result(Data):
     def __init__(self, data):
         self._data = data
 
@@ -46,6 +46,6 @@ if __name__ == "__main__":
     temp = config.get('input', 'meter_addr_list')
     meter_addr_list = list(map(str, json.loads(temp)))
 
-    id_data_list = [od.IdData(addr) for addr in meter_addr_list]
+    id_data_list = [self._od.IdData(addr) for addr in meter_addr_list]
     # print(DeviationResult(id_data_list[0], 'active', 'balanced').read())
-    print(JiduResult(od.JiduData(id_data_list[0])).read())
+    print(JiduResult(self._od.JiduData(id_data_list[0])).read())
